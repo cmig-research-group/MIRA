@@ -68,20 +68,25 @@ else
     end
 end
 
+%% Step 1: divide mean FD into percentiles
+allBins          = linspace(0, 100, nbins+1);
+prctilelist      = prctile(meanfdvec, allBins);
+prctilelist(end) = Inf;
+nprcbins         = length(prctilelist)-1;
+
 % Check refBin
 if ~exist('refBin', 'var') || isempty(refBin)
-    refBin = 1;
+    refBin = find(allBins,1);
 else
     if ~isnumeric(refBin)
         error(['refBin should be a number specifying which percentile bin ', ...
                'should be used as reference']);
+    else
+        if refBin > length(allBins)
+            error('refBin exceeds number of computed bins');
+        end
     end
 end
-
-%% Step 1: divide mean FD into percentiles
-prctilelist      = prctile(meanfdvec, linspace(0, 100, nbins+1));
-prctilelist(end) = Inf;
-nprcbins         = length(prctilelist)-1;
 
 % Any columns of corrmat that needs to be ignored?
 % defvec = isfinite(sum(corrmat,2));
