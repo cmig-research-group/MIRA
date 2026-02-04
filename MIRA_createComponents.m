@@ -1,5 +1,6 @@
-function [MIRA_vectors, muvec_lomot, V_mot] = MIRA_createComponents(corrmat, meanfdvec, nbins, refBin)
-% [MIRA_vectors, muvec_lomot, V_mot] = MIRA_createComponents(corrmat, meanfdvec, nbins, refBin)
+function [MIRA_vectors, muvec_lomot, V_mot, matBinAssign] = ...
+          MIRA_createComponents(corrmat, meanfdvec, nbins, refBin)
+% [MIRA_vectors, muvec_lomot, V_mot, matBinAssign] = MIRA_createComponents(corrmat, meanfdvec, nbins, refBin)
 % Function to create MIRA projection vectors, given a set of concatenated
 % resting state fMRI correlation matrices, and a vector of mean framewise
 % displacement
@@ -33,6 +34,9 @@ function [MIRA_vectors, muvec_lomot, V_mot] = MIRA_createComponents(corrmat, mea
 %                           where b is the number of percentile bins that
 %                           motion was split in
 %
+% matBinAssign: [n x p]     logical matrix of which observations where
+%                           assigned to which percentile bin
+% 
 %% Notes:
 % To project new data "corrmat_new" on to the same vectors, do:
 %   bias_corrmat_new = corrmat_new - muvec_lomot;
@@ -91,6 +95,9 @@ end
 % Any columns of corrmat that needs to be ignored?
 % defvec = isfinite(sum(corrmat,2));
 
+% Matrix of logical values of which observations belong to which percentile bin
+matBinAssign = false(length(meanfdvec), nprcbins);
+
 %% Step 2: average of the low motion group
 ivec_lomot  = meanfdvec < prctilelist(refBin); % & defvec
 muvec_lomot = mean(corrmat(ivec_lomot,:), 'omitmissing');
@@ -103,6 +110,9 @@ mumat = nan(nprcbins, size(corrmat_bias,2));
 for prci = 1:nprcbins
     ivec_tmp      = meanfdvec >= prctilelist(prci) & meanfdvec < prctilelist(prci+1); % & defvec
     mumat(prci,:) = mean(corrmat_bias(ivec_tmp,:), 'omitmissing');
+
+    % Keep track of which subjects got assigned to which bin
+    matBinAssign(:,prci) = ivec_tmp;
 end
 
 %% Step 5: SVD on bias matrix for every percentile bin
